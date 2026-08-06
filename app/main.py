@@ -1,13 +1,17 @@
 """
-CloudVault
-AWS S3 File Manager
-Author: Rupesh Chavan
+Lists all available S3 buckets.
 """
 
-print("===================================")
-print(" Welcome to CloudVault ")
-print(" AWS S3 File Manager ")
-print(" Version : 1.0.0 ")
-print("===================================")
-print("Project setup completed successfully.")
-print("Next step: Connect with AWS S3.")
+from s3_service import s3
+
+
+def list_buckets():
+    response = s3.list_buckets()
+
+    print("\nAvailable Buckets\n")
+
+    for bucket in response["Buckets"]:
+        print(f"• {bucket['Name']}")
+
+if __name__ == "__main__":
+    list_buckets()
