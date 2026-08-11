@@ -80,32 +80,45 @@ def main():
 
         elif choice == "5":
 
+           
+
             file_name = input(
-                "Enter the S3 file name: "
+                 "Enter the S3 file name: "
             ).strip()
 
-            download_path = input(
-                "Enter the local path where you want to save the file: "
-            ).strip()
+           if not validate_file_name(file_name):
 
-            download_file(
-                file_name,
-                download_path
-            )
+              print("❌ File name cannot be empty.")
+              continue
 
+           download_path = input(
+               "Enter the local path where you want to save the file: "
+          ).strip()
+
+          if not validate_download_path(download_path):
+
+              print("❌ Download path cannot be empty.")
+              continue
+
+         download_file(
+             file_name,
+             download_path
+         )
         # -------------------------------
         # Delete File
         # -------------------------------
 
-        elif choice == "6":
-
+       elif choice == "6":
             file_name = input(
                 "Enter the S3 file name to delete: "
             ).strip()
+    
+           if not validate_file_name(file_name):
 
-            delete_file(file_name)
+                print("❌ File name cannot be empty.")
+                continue
 
-        # -------------------------------
+           delete_file(file_name)
         # Delete Bucket
         # -------------------------------
 
