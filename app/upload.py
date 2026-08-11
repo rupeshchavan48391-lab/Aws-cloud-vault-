@@ -3,29 +3,19 @@ from botocore.exceptions import ClientError
 from s3_service import s3
 from config import BUCKET_NAME
 
-import os
+from utils import check_file_exists, get_file_name
 
 
 def upload_file(file_path):
-    """
-    Upload a file to the configured S3 bucket.
 
-    Parameters
-    ----------
-    file_path : str
-        Local path of the file to upload.
-    """
     try:
 
-        # Check whether the file exists
-        if not os.path.isfile(file_path):
+        if not check_file_exists(file_path):
             print("❌ File not found.")
             return
 
-        # Extract only the filename
-        file_name = os.path.basename(file_path)
+        file_name = get_file_name(file_path)
 
-        # Upload file
         s3.upload_file(
             file_path,
             BUCKET_NAME,
