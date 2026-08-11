@@ -22,9 +22,8 @@ def upload_file(file_path):
             file_name
         )
 
-        print(f"✅ '{file_name}' uploaded successfully.")
-        print(f"Bucket : {BUCKET_NAME}")
-
+       logger.info(f"File '{file_name}' uploaded successfully.")
+logger.info(f"Bucket: {BUCKET_NAME}")
     except ClientError as error:
         print(f"❌ Upload Failed\n{error}")
 
