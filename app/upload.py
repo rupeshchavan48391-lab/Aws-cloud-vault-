@@ -2,6 +2,8 @@
 from botocore.exceptions import ClientError
 from s3_service import s3
 from config import BUCKET_NAME
+from logger import logger
+
 
 from utils import check_file_exists, get_file_name
 
