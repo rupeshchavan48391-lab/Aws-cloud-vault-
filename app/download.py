@@ -3,7 +3,7 @@
 from botocore.exceptions import ClientError
 from s3_service import s3
 from config import BUCKET_NAME
-
+from logger import logger
 
 def download_file(file_name, download_path):
   
@@ -15,11 +15,11 @@ def download_file(file_name, download_path):
             download_path
         )
 
-        print(f"✅ '{file_name}' downloaded successfully.")
-        print(f"Saved To : {download_path}")
+       logger.info(f"File '{file_name}' downloaded successfully.")
+       logger.info(f"Saved to: {download_path}")
 
-    except ClientError as error:
-        print(f"❌ Download Failed\n{error}")
+  except ClientError as error:
+    logger.error(f"Download failed: {error}")
 
-    except Exception as error:
-        print(error)
+except Exception as error:
+    logger.error(f"Unexpected error: {error}")
