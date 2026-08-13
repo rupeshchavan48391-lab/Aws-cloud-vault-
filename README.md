@@ -1,31 +1,42 @@
-# Aws-cloud-vault-
-AWS S3 File Manager built with Python , Flask , Docker and Boto3.
 # ☁️ CloudVault
 
-CloudVault is a beginner-friendly AWS S3 File Manager built with Python and the Boto3 SDK.
+### AWS S3 Cloud File Manager
 
-The goal of this project is to learn how to interact with Amazon S3 using Python while following a professional project structure.
+CloudVault is a Python-based command-line application for managing files in Amazon S3 using the AWS SDK for Python (Boto3).
 
-## 🚀 Planned Features
+The project demonstrates how a Python application can interact with AWS S3 to create buckets, upload files, download files, list objects, and delete files, while being packaged and executed using Docker.
 
-- Create S3 Bucket
-- List Buckets
-- Upload Files
-- Download Files
-- Delete Files
-- List Objects
-- Error Handling
-- Logging
-- Docker Support
+---
 
-## 🛠 Tech Stack
+## 🚀 Features
 
-- Python
-- AWS S3
-- Boto3
-- Git & GitHub
-- Docker (Coming Soon)
+- Create an AWS S3 bucket
+- List available S3 buckets
+- Upload files to S3
+- List files stored in S3
+- Download files from S3
+- Delete files from S3
+- Delete S3 bucket
+- Error handling
+- Application logging
+- Dockerized application
+- AWS IAM-based authentication
 
-## 📌 Project Status
+---
 
-🚧 Project under development.
+## 🏗️ Architecture
+
+```text
+                CloudVault
+                    │
+                    ▼
+              Python Application
+                    │
+                    ▼
+                 Boto3
+                    │
+                    ▼
+               AWS S3 API
+                    │
+                    ▼
+             Amazon S3 Bucket
