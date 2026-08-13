@@ -21,95 +21,212 @@ The project demonstrates how a Python application can interact with AWS S3 to cr
 - Application logging
 - Dockerized application
 - AWS IAM-based authentication
+## 🏗️ System Architecture
 
----
-
-## 🏗️ Architecture
-
-```text
-                CloudVault
-                    │
-                    ▼
-              Python Application
-                    │
-                    ▼
-                 Boto3
-                    │
-                    ▼
-               AWS S3 API
-                    │
-                    ▼
-             Amazon S3 Bucket
-
----
-
-## 🐳 Docker Deployment
+CloudVault follows a simple cloud-based architecture where the Python application communicates with Amazon S3 through Boto3.
 
 ```text
-GitHub Repository
-       │
-       ▼
-   Dockerfile
-       │
-       ▼
- Docker Image
-       │
-       ▼
- Docker Container
-       │
-       ▼
-     Boto3
-       │
-       ▼
-     AWS S3
+                         ☁️ CLOUDVAULT
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │  Python CLI App   │
+                    │    CloudVault     │
+                    └─────────┬─────────┘
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │      Boto3        │
+                    │     AWS SDK       │
+                    └─────────┬─────────┘
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │    Amazon S3      │
+                    │   Cloud Storage   │
+                    └─────────┬─────────┘
+                              │
+                              ▼
+                  ┌────────────────────────┐
+                  │ cloudvault-rupesh-2026 │
+                  │                        │
+                  │ 📄 Files / Objects     │
+                  └────────────────────────┘
+```
 
+### 🔄 Application Flow
 
-| Technology   | Purpose                      |
-| ------------ | ---------------------------- |
-| Python       | Application development      |
-| Boto3        | AWS SDK for Python           |
-| Amazon S3    | Cloud file storage           |
-| Docker       | Application containerization |
-| Ubuntu Linux | Development environment      |
-| Git & GitHub | Version control              |
-| AWS IAM      | Secure AWS access            |
-
-
-🚀 Run the Project
-1. Clone the repository
-git clone https://github.com/rupeshchavan48391-lab/Aws-cloud-vault-.git
-2. Enter the project directory
-cd Aws-cloud-vault-
-3. Build the Docker image
-docker build -t cloudvault .
-4. Run CloudVault
-docker run -it --rm cloudvault
-
-🔐 Security
-AWS credentials are not stored in the source code.
-AWS IAM controls access to Amazon S3.
-EC2 IAM roles can provide temporary AWS credentials.
-Never commit AWS access keys or secret keys to GitHub.
-🎯 Learning Objectives
-
-This project was built to gain hands-on experience with:
-
-Python
-Amazon S3
+```text
+User
+ │
+ │ Selects operation
+ ▼
+CloudVault CLI
+ │
+ │ Python function
+ ▼
 Boto3
-AWS IAM
-Linux / Ubuntu
-Docker
-Git & GitHub
-Cloud application architecture
+ │
+ │ AWS API Request
+ ▼
+Amazon S3
+ │
+ ├── 📤 Upload
+ ├── 📥 Download
+ ├── 📋 List
+ ├── 🗑️ Delete
+ └── 📦 Bucket Management
+```
 
-🔮 Future Improvements
-Web-based interface using Flask
-File search and filtering
-File metadata display
-Authentication
-S3 presigned URLs
-CI/CD pipeline with Jenkins
-Kubernetes deployment
-Monitoring and health checks
+> **Note:** AWS IAM authorizes the application's access to AWS resources. It is not a separate storage/API step between Boto3 and S3.
+
+---
+
+## 🐳 Docker Architecture
+
+CloudVault is packaged as a Docker container to provide a consistent and portable runtime environment.
+
+```text
+       👨‍💻 Developer
+             │
+             ▼
+       🌐 GitHub Repository
+             │
+             ▼
+        ┌───────────┐
+        │ Dockerfile│
+        └─────┬─────┘
+              │
+              ▼
+        🐳 Docker Image
+              │
+              ▼
+        📦 Container
+              │
+              ▼
+       ☁️ CloudVault
+              │
+              ▼
+           Boto3
+              │
+              ▼
+         ☁️ Amazon S3
+```
+
+### 🔗 Complete Project Flow
+
+```text
+🌐 GitHub
+    │
+    ▼
+🐳 Docker
+    │
+    ▼
+🐍 Python CloudVault
+    │
+    ▼
+🔗 Boto3
+    │
+    ▼
+☁️ Amazon S3
+    │
+    ▼
+📦 Cloud File Storage
+
+🔐 AWS IAM
+    │
+    └── Authorizes access to AWS resources
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Technology | Role |
+|---|---|
+| 🐍 Python | Application logic |
+| ☁️ Amazon S3 | Cloud file storage |
+| 🔗 Boto3 | AWS SDK for Python |
+| 🐳 Docker | Application containerization |
+| 🐧 Ubuntu Linux | Development and deployment environment |
+| 🔐 AWS IAM | Identity and access management |
+| 🌐 Git & GitHub | Version control |
+
+---
+
+## 🚀 Run the Project
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/rupeshchavan48391-lab/Aws-cloud-vault-.git
+```
+
+### 2️⃣ Navigate to the Project
+
+```bash
+cd Aws-cloud-vault-
+```
+
+### 3️⃣ Build the Docker Image
+
+```bash
+docker build -t cloudvault .
+```
+
+### 4️⃣ Run CloudVault
+
+```bash
+docker run -it --rm cloudvault
+```
+
+---
+
+```
+
+---
+
+## 🎯 Learning Objectives
+
+This project was built as a hands-on Cloud & DevOps project to gain practical experience with:
+
+- 🐍 Python application development
+- ☁️ Amazon S3
+- 🔗 Boto3
+- 🔐 AWS IAM
+- 🐧 Linux / Ubuntu
+- 🐳 Docker
+- 🌐 Git & GitHub
+- 🏗️ Cloud application architecture
+
+---
+
+## 🔮 Future Enhancements
+
+The project can be extended with:
+
+- 🌐 Web-based interface using Flask
+- 🔎 File search and filtering
+- 📊 File metadata and storage statistics
+- 🔐 User authentication
+- 🔗 S3 presigned URLs
+- ⚙️ CI/CD pipeline using Jenkins
+- ☸️ Kubernetes deployment
+- 📈 Application monitoring and health checks
+
+---
+
+## ⭐ Project Highlights
+
+☁️ AWS S3 Integration
+🐍 Python + Boto3
+🐳 Dockerized Application
+🔐 IAM-based AWS Access
+🐧 Linux Deployment
+🌐 GitHub Version Control
+🏗️ Cloud Application Architecture
+```
+
+
+---
 
