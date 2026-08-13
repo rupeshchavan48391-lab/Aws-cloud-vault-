@@ -180,11 +180,6 @@ docker build -t cloudvault .
 docker run -it --rm cloudvault
 ```
 
----
-
-```
-
----
 
 ## 🎯 Learning Objectives
 
