@@ -376,7 +376,6 @@
 
                 <div>
 
-
                     <span class="welcome-label">
                         CLOUD STORAGE DASHBOARD
                     </span>
@@ -390,7 +389,6 @@
                     <p>
                         Manage your files securely from one place.
                     </p>
-
 
                 </div>
 
@@ -419,7 +417,7 @@
             <div class="stats-grid">
 
 
-                <!-- STORAGE -->
+                <!-- TOTAL STORAGE -->
 
                 <div class="stat-card blue-card">
 
@@ -453,7 +451,7 @@
                 </div>
 
 
-                <!-- FILES -->
+                <!-- TOTAL FILES -->
 
                 <div class="stat-card purple-card">
 
@@ -467,15 +465,18 @@
 
 
                         <span class="stat-trend">
-                            Files
+                            S3
                         </span>
 
 
                     </div>
 
 
-                    <div class="stat-value">
-                        24
+                    <div
+                        class="stat-value"
+                        id="totalFiles"
+                    >
+                        —
                     </div>
 
 
@@ -501,15 +502,18 @@
 
 
                         <span class="stat-trend positive">
-                            78%
+                            Cloud
                         </span>
 
 
                     </div>
 
 
-                    <div class="stat-value">
-                        7.8 GB
+                    <div
+                        class="stat-value"
+                        id="storageUsed"
+                    >
+                        —
                     </div>
 
 
@@ -521,7 +525,7 @@
                 </div>
 
 
-                <!-- RECENT -->
+                <!-- RECENT FILES -->
 
                 <div class="stat-card orange-card">
 
@@ -535,15 +539,18 @@
 
 
                         <span class="stat-trend">
-                            Today
+                            Live
                         </span>
 
 
                     </div>
 
 
-                    <div class="stat-value">
-                        8
+                    <div
+                        class="stat-value"
+                        id="recentFiles"
+                    >
+                        —
                     </div>
 
 
@@ -674,8 +681,10 @@
                             <div class="donut-inner">
 
 
-                                <strong>
-                                    78%
+                                <strong
+                                    id="storagePercentage"
+                                >
+                                    —
                                 </strong>
 
 
@@ -710,8 +719,8 @@
                             </span>
 
 
-                            <strong>
-                                2.1 GB
+                            <strong id="documentsSize">
+                                —
                             </strong>
 
 
@@ -730,8 +739,8 @@
                             </span>
 
 
-                            <strong>
-                                1.8 GB
+                            <strong id="imagesSize">
+                                —
                             </strong>
 
 
@@ -750,8 +759,8 @@
                             </span>
 
 
-                            <strong>
-                                1.2 GB
+                            <strong id="archivesSize">
+                                —
                             </strong>
 
 
@@ -770,8 +779,8 @@
                             </span>
 
 
-                            <strong>
-                                2.7 GB
+                            <strong id="otherSize">
+                                —
                             </strong>
 
 
@@ -821,7 +830,9 @@
                 </div>
 
 
-                <!-- FILE TABLE -->
+                <!-- =================================================
+                     DYNAMIC FILE TABLE
+                     ================================================= -->
 
                 <div class="file-table">
 
@@ -859,250 +870,25 @@
                     </div>
 
 
-                    <!-- FILE 1 -->
+                    <!-- =================================================
+                         REAL S3 FILES WILL BE INSERTED HERE
+                         ================================================= -->
 
-                    <div class="file-row">
+                    <div id="fileList">
 
 
-                        <div class="file-name">
+                        <div class="file-row">
 
 
-                            <div class="file-icon pdf">
-                                PDF
-                            </div>
+                            <span
+                                style="
+                                    grid-column: 1 / -1;
+                                "
+                            >
 
+                                ☁ Loading files from CloudVault...
 
-                            <div>
-
-                                <strong>
-                                    project-report.pdf
-                                </strong>
-
-                                <small>
-                                    Document
-                                </small>
-
-                            </div>
-
-
-                        </div>
-
-
-                        <span>
-                            2.4 MB
-                        </span>
-
-
-                        <span>
-                            Today, 10:24 AM
-                        </span>
-
-
-                        <span class="status success">
-                            ● Stored
-                        </span>
-
-
-                        <div class="file-actions">
-
-
-                            <button type="button">
-                                ↓
-                            </button>
-
-
-                            <button type="button">
-                                ⋮
-                            </button>
-
-
-                        </div>
-
-
-                    </div>
-
-
-                    <!-- FILE 2 -->
-
-                    <div class="file-row">
-
-
-                        <div class="file-name">
-
-
-                            <div class="file-icon python">
-                                PY
-                            </div>
-
-
-                            <div>
-
-                                <strong>
-                                    cloudvault.py
-                                </strong>
-
-                                <small>
-                                    Python
-                                </small>
-
-                            </div>
-
-
-                        </div>
-
-
-                        <span>
-                            18 KB
-                        </span>
-
-
-                        <span>
-                            Today, 09:42 AM
-                        </span>
-
-
-                        <span class="status success">
-                            ● Stored
-                        </span>
-
-
-                        <div class="file-actions">
-
-
-                            <button type="button">
-                                ↓
-                            </button>
-
-
-                            <button type="button">
-                                ⋮
-                            </button>
-
-
-                        </div>
-
-
-                    </div>
-
-
-                    <!-- FILE 3 -->
-
-                    <div class="file-row">
-
-
-                        <div class="file-name">
-
-
-                            <div class="file-icon image">
-                                IMG
-                            </div>
-
-
-                            <div>
-
-                                <strong>
-                                    architecture.png
-                                </strong>
-
-                                <small>
-                                    Image
-                                </small>
-
-                            </div>
-
-
-                        </div>
-
-
-                        <span>
-                            1.2 MB
-                        </span>
-
-
-                        <span>
-                            Yesterday
-                        </span>
-
-
-                        <span class="status success">
-                            ● Stored
-                        </span>
-
-
-                        <div class="file-actions">
-
-
-                            <button type="button">
-                                ↓
-                            </button>
-
-
-                            <button type="button">
-                                ⋮
-                            </button>
-
-
-                        </div>
-
-
-                    </div>
-
-
-                    <!-- FILE 4 -->
-
-                    <div class="file-row">
-
-
-                        <div class="file-name">
-
-
-                            <div class="file-icon archive">
-                                ZIP
-                            </div>
-
-
-                            <div>
-
-                                <strong>
-                                    cloudvault-backup.zip
-                                </strong>
-
-                                <small>
-                                    Archive
-                                </small>
-
-                            </div>
-
-
-                        </div>
-
-
-                        <span>
-                            45 MB
-                        </span>
-
-
-                        <span>
-                            Aug 25, 2026
-                        </span>
-
-
-                        <span class="status success">
-                            ● Stored
-                        </span>
-
-
-                        <div class="file-actions">
-
-
-                            <button type="button">
-                                ↓
-                            </button>
-
-
-                            <button type="button">
-                                ⋮
-                            </button>
+                            </span>
 
 
                         </div>
