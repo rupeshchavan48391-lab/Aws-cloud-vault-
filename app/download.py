@@ -1,11 +1,14 @@
 from botocore.exceptions import ClientError
-
 from s3_service import s3
 from config import BUCKET_NAME
 from logger import logger
 
 
 def download_file(file_name, download_path):
+    """
+    Download a file from the configured S3 bucket
+    to the specified local/server path.
+    """
 
     try:
 
@@ -40,5 +43,3 @@ def download_file(file_name, download_path):
         )
 
         return False
-
-
