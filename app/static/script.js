@@ -1,12 +1,9 @@
 /* =========================================================
-   CLOUDVAULT — DASHBOARD JAVASCRIPT
+   CLOUDVAULT — DASHBOARD
+   Frontend API Integration
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-
-    /* =====================================================
-       ELEMENTS
-       ===================================================== */
 
     const searchInput =
         document.getElementById("searchInput");
@@ -22,6 +19,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const notificationButton =
         document.querySelector(".notification-button");
+
+    const fileInput =
+        document.createElement("input");
+
+    fileInput.type = "file";
+    fileInput.multiple = true;
+    fileInput.style.display = "none";
+
+    document.body.appendChild(fileInput);
+
+
+    /* =====================================================
+       INITIAL LOAD
+       ===================================================== */
+
+    loadFiles();
 
 
     /* =====================================================
@@ -39,32 +52,25 @@ document.addEventListener("DOMContentLoaded", () => {
                         .toLowerCase()
                         .trim();
 
-                const fileRows =
+                const rows =
                     document.querySelectorAll(
                         ".file-row:not(.table-header)"
                     );
 
-                fileRows.forEach(row => {
+                rows.forEach(row => {
 
                     const fileName =
                         row
-                            .querySelector(".file-name")
+                            .querySelector(
+                                ".file-name strong"
+                            )
                             ?.innerText
                             .toLowerCase() || "";
 
-                    if (
+                    row.style.display =
                         fileName.includes(searchTerm)
-                    ) {
-
-                        row.style.display =
-                            "grid";
-
-                    } else {
-
-                        row.style.display =
-                            "none";
-
-                    }
+                            ? "grid"
+                            : "none";
 
                 });
 
@@ -75,8 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       KEYBOARD SEARCH SHORTCUT
-       Press "/" to focus search
+       SEARCH SHORTCUT
        ===================================================== */
 
     document.addEventListener(
@@ -90,11 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 event.preventDefault();
 
-                if (searchInput) {
-
-                    searchInput.focus();
-
-                }
+                searchInput?.focus();
 
             }
 
@@ -103,59 +104,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       FILE INPUT
+       CHOOSE FILE
        ===================================================== */
 
-    const fileInput =
-        document.createElement("input");
+    chooseButton?.addEventListener(
+        "click",
+        () => {
 
-    fileInput.type = "file";
+            fileInput.click();
 
-    fileInput.multiple = true;
+        }
+    );
 
-    fileInput.style.display = "none";
 
-    document.body.appendChild(fileInput);
+    uploadButton?.addEventListener(
+        "click",
+        () => {
+
+            fileInput.click();
+
+        }
+    );
 
 
     /* =====================================================
-       CHOOSE FILES BUTTON
-       ===================================================== */
-
-    if (chooseButton) {
-
-        chooseButton.addEventListener(
-            "click",
-            () => {
-
-                fileInput.click();
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       UPLOAD BUTTON
-       ===================================================== */
-
-    if (uploadButton) {
-
-        uploadButton.addEventListener(
-            "click",
-            () => {
-
-                fileInput.click();
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       FILE SELECTION
+       FILE SELECTED
        ===================================================== */
 
     fileInput.addEventListener(
@@ -167,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 fileInput.files.length > 0
             ) {
 
-                handleFiles(
+                uploadFiles(
                     fileInput.files
                 );
 
@@ -193,7 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 event => {
 
                     event.preventDefault();
-
                     event.stopPropagation();
 
                     dropZone.classList.add(
@@ -216,7 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 event => {
 
                     event.preventDefault();
-
                     event.stopPropagation();
 
                     dropZone.classList.remove(
@@ -241,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     files.length > 0
                 ) {
 
-                    handleFiles(files);
+                    uploadFiles(files);
 
                 }
 
@@ -252,51 +223,300 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       HANDLE SELECTED FILES
+       UPLOAD FILES
        ===================================================== */
 
-    function handleFiles(files) {
+    async function uploadFiles(files) {
 
-        console.log(
-            "Selected files:"
-        );
+        for (const file of files) {
 
-        Array.from(files).forEach(
-            file => {
+            try {
 
-                console.log(
-                    file.name,
-                    file.size,
-                    file.type
+                showNotification(
+                    `Uploading ${file.name}...`
+                );
+
+
+                const formData =
+                    new FormData();
+
+                formData.append(
+                    "file",
+                    file
+                );
+
+
+                const response =
+                    await fetch(
+                        "/api/upload",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (!response.ok || !result.success) {
+
+                    throw new Error(
+                        result.error ||
+                        "Upload failed"
+                    );
+
+                }
+
+
+                showNotification(
+                    `${file.name} uploaded successfully`
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Upload error:",
+                    error
+                );
+
+
+                showNotification(
+                    `Upload failed: ${file.name}`
                 );
 
             }
-        );
+
+        }
 
 
-        showNotification(
-            `${files.length} file(s) selected`
-        );
+        await loadFiles();
 
     }
 
 
     /* =====================================================
-       NOTIFICATION BUTTON
+       LOAD FILES FROM AWS S3
        ===================================================== */
 
-    if (notificationButton) {
+    async function loadFiles() {
 
-        notificationButton.addEventListener(
-            "click",
-            () => {
+        try {
 
-                showNotification(
-                    "CloudVault is running normally."
+            const response =
+                await fetch(
+                    "/api/files"
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                console.error(
+                    "Unable to load files:",
+                    result.error
+                );
+
+                return;
+
+            }
+
+
+            console.log(
+                "CloudVault files:",
+                result.files
+            );
+
+
+            /*
+             * The backend is now connected.
+             *
+             * Once we confirm the exact structure returned
+             * by your existing list_files.py, we'll render
+             * the real S3 files into the dashboard table.
+             */
+
+        } catch (error) {
+
+            console.error(
+                "File loading error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       DOWNLOAD FILE
+       ===================================================== */
+
+    async function downloadFile(
+        fileName
+    ) {
+
+        try {
+
+            showNotification(
+                `Preparing ${fileName}...`
+            );
+
+
+            const response =
+                await fetch(
+                    "/api/download",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            file_name:
+                                fileName,
+
+                            download_path:
+                                "/tmp"
+                        })
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.error ||
+                    "Download failed"
                 );
 
             }
-        );
+
+
+            showNotification(
+                `${fileName} downloaded successfully`
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Download error:",
+                error
+            );
+
+
+            showNotification(
+                `Download failed: ${fileName}`
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       DELETE FILE
+       ===================================================== */
+
+    async function deleteFile(
+        fileName
+    ) {
+
+        const confirmed =
+            confirm(
+                `Delete "${fileName}" from CloudVault?`
+            );
+
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+
+        try {
+
+            showNotification(
+                `Deleting ${fileName}...`
+            );
+
+
+            const response =
+                await fetch(
+                    "/api/delete",
+                    {
+                        method: "DELETE",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            file_name:
+                                fileName
+                        })
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.error ||
+                    "Delete failed"
+                );
+
+            }
+
+
+            showNotification(
+                `${fileName} deleted successfully`
+            );
+
+
+            await loadFiles();
+
+
+        } catch (error) {
+
+            console.error(
+                "Delete error:",
+                error
+            );
+
+
+            showNotification(
+                `Delete failed: ${fileName}`
+            );
+
+        }
 
     }
 
@@ -305,61 +525,76 @@ document.addEventListener("DOMContentLoaded", () => {
        FILE ACTION BUTTONS
        ===================================================== */
 
-    const actionButtons =
-        document.querySelectorAll(
-            ".file-actions button"
-        );
+    document.addEventListener(
+        "click",
+        event => {
+
+            const button =
+                event.target.closest(
+                    ".file-actions button"
+                );
 
 
-    actionButtons.forEach(
-        button => {
+            if (!button) {
 
-            button.addEventListener(
-                "click",
-                event => {
+                return;
 
-                    event.stopPropagation();
-
-                    const row =
-                        button.closest(
-                            ".file-row"
-                        );
-
-                    const fileName =
-                        row
-                            ?.querySelector(
-                                ".file-name strong"
-                            )
-                            ?.innerText;
-
-                    if (!fileName) {
-
-                        return;
-
-                    }
+            }
 
 
-                    const buttonText =
-                        button.innerText.trim();
+            const row =
+                button.closest(
+                    ".file-row"
+                );
 
 
-                    if (
-                        buttonText === "↓"
-                    ) {
+            const fileName =
+                row
+                    ?.querySelector(
+                        ".file-name strong"
+                    )
+                    ?.innerText;
 
-                        showNotification(
-                            `Download requested: ${fileName}`
-                        );
 
-                    } else {
+            if (!fileName) {
 
-                        showNotification(
-                            `More options for ${fileName}`
-                        );
+                return;
 
-                    }
+            }
 
-                }
+
+            const buttonText =
+                button.innerText.trim();
+
+
+            if (buttonText === "↓") {
+
+                downloadFile(
+                    fileName
+                );
+
+            } else {
+
+                showNotification(
+                    `Options for ${fileName}`
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       NOTIFICATIONS
+       ===================================================== */
+
+    notificationButton?.addEventListener(
+        "click",
+        () => {
+
+            showNotification(
+                "CloudVault is running normally."
             );
 
         }
@@ -367,35 +602,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       VIEW ALL
-       ===================================================== */
-
-    const viewAll =
-        document.querySelector(
-            ".view-all"
-        );
-
-
-    if (viewAll) {
-
-        viewAll.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-
-                showNotification(
-                    "Opening all files..."
-                );
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       SIDEBAR NAVIGATION
+       NAVIGATION
        ===================================================== */
 
     const navLinks =
@@ -404,42 +611,43 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
 
-    navLinks.forEach(
-        link => {
+    navLinks.forEach(link => {
 
-            link.addEventListener(
-                "click",
-                event => {
+        link.addEventListener(
+            "click",
+            event => {
 
-                    event.preventDefault();
-
-                    navLinks.forEach(
-                        item => {
-
-                            item.classList.remove(
-                                "active"
-                            );
-
-                        }
-                    );
+                event.preventDefault();
 
 
-                    link.classList.add(
-                        "active"
-                    );
+                navLinks.forEach(
+                    item => {
 
-                }
-            );
+                        item.classList.remove(
+                            "active"
+                        );
 
-        }
-    );
+                    }
+                );
+
+
+                link.classList.add(
+                    "active"
+                );
+
+            }
+        );
+
+    });
 
 
     /* =====================================================
-       SIMPLE NOTIFICATION
+       TOAST
        ===================================================== */
 
-    function showNotification(message) {
+    function showNotification(
+        message
+    ) {
 
         const existing =
             document.querySelector(
@@ -447,11 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (existing) {
-
-            existing.remove();
-
-        }
+        existing?.remove();
 
 
         const toast =
@@ -500,7 +704,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       TOAST STYLING
+       TOAST CSS
        ===================================================== */
 
     const toastStyle =
@@ -533,7 +737,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             background: #162238;
 
-            border: 1px solid rgba(96,165,250,0.25);
+            border:
+                1px solid
+                rgba(96,165,250,0.25);
 
             color: #e2e8f0;
 
@@ -617,6 +823,5 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(
         toastStyle
     );
-
 
 });
