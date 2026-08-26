@@ -1,6 +1,6 @@
 
-
 from botocore.exceptions import ClientError
+
 from s3_service import s3
 from config import BUCKET_NAME
 from logger import logger
@@ -18,12 +18,24 @@ def delete_file(file_name):
             Key=file_name
         )
 
-        logger.info(f"File '{file_name}' deleted successfully.")
+        logger.info(
+            f"File '{file_name}' deleted successfully."
+        )
+
+        return True
 
     except ClientError as error:
 
-        logger.error(f"Delete failed: {error}")
+        logger.error(
+            f"Delete failed: {error}"
+        )
+
+        return False
 
     except Exception as error:
 
-        logger.error(f"Unexpected error: {error}")
+        logger.error(
+            f"Unexpected error: {error}"
+        )
+
+        return False
