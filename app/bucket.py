@@ -1,5 +1,5 @@
-
 from botocore.exceptions import ClientError
+
 from s3_service import s3
 from config import BUCKET_NAME, AWS_REGION
 from logger import logger
@@ -23,11 +23,15 @@ def create_bucket():
             f"Bucket '{BUCKET_NAME}' created successfully."
         )
 
+        return True
+
     except ClientError as error:
 
         logger.error(
             f"Bucket creation failed: {error}"
         )
+
+        return False
 
     except Exception as error:
 
@@ -35,21 +39,37 @@ def create_bucket():
             f"Unexpected error: {error}"
         )
 
+        return False
+
 
 def list_buckets():
     """
-    Display all available S3 buckets.
+    Return all available S3 buckets.
     """
 
     try:
 
         response = s3.list_buckets()
 
-        logger.info("Available S3 buckets:")
+        buckets = []
 
-        for bucket in response["Buckets"]:
+        for bucket in response.get(
+            "Buckets",
+            []
+        ):
 
-            print(f"• {bucket['Name']}")
+            buckets.append({
+                "name": bucket["Name"],
+                "creation_date": (
+                    bucket["CreationDate"].isoformat()
+                )
+            })
+
+        logger.info(
+            f"Found {len(buckets)} S3 bucket(s)."
+        )
+
+        return buckets
 
     except ClientError as error:
 
@@ -57,11 +77,15 @@ def list_buckets():
             f"Failed to list buckets: {error}"
         )
 
+        return []
+
     except Exception as error:
 
         logger.error(
             f"Unexpected error: {error}"
         )
+
+        return []
 
 
 def delete_bucket():
@@ -79,14 +103,20 @@ def delete_bucket():
             f"Bucket '{BUCKET_NAME}' deleted successfully."
         )
 
+        return True
+
     except ClientError as error:
 
         logger.error(
             f"Bucket deletion failed: {error}"
         )
 
+        return False
+
     except Exception as error:
 
         logger.error(
             f"Unexpected error: {error}"
         )
+
+        return False
