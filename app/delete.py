@@ -9,6 +9,10 @@ from logger import logger
 def delete_file(file_name):
     """
     Delete a file from the configured S3 bucket.
+
+    Returns:
+        True  -> file deleted successfully
+        False -> deletion failed
     """
 
     try:
@@ -24,6 +28,7 @@ def delete_file(file_name):
 
         return True
 
+
     except ClientError as error:
 
         logger.error(
@@ -31,6 +36,7 @@ def delete_file(file_name):
         )
 
         return False
+
 
     except Exception as error:
 
