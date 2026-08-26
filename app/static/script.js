@@ -1,6 +1,6 @@
 /* =========================================================
-   CLOUDVAULT — DASHBOARD
-   Frontend API Integration
+   CLOUDVAULT
+   Dashboard Frontend
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -19,6 +19,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const notificationButton =
         document.querySelector(".notification-button");
+
+
+    /* =====================================================
+       FILE INPUT
+       ===================================================== */
 
     const fileInput =
         document.createElement("input");
@@ -41,43 +46,39 @@ document.addEventListener("DOMContentLoaded", () => {
        SEARCH
        ===================================================== */
 
-    if (searchInput) {
+    searchInput?.addEventListener(
+        "input",
+        () => {
 
-        searchInput.addEventListener(
-            "input",
-            () => {
+            const searchTerm =
+                searchInput.value
+                    .toLowerCase()
+                    .trim();
 
-                const searchTerm =
-                    searchInput.value
-                        .toLowerCase()
-                        .trim();
+            const rows =
+                document.querySelectorAll(
+                    "#fileList .file-row"
+                );
 
-                const rows =
-                    document.querySelectorAll(
-                        ".file-row:not(.table-header)"
-                    );
+            rows.forEach(row => {
 
-                rows.forEach(row => {
+                const fileName =
+                    row
+                        .querySelector(
+                            ".file-name strong"
+                        )
+                        ?.innerText
+                        .toLowerCase() || "";
 
-                    const fileName =
-                        row
-                            .querySelector(
-                                ".file-name strong"
-                            )
-                            ?.innerText
-                            .toLowerCase() || "";
+                row.style.display =
+                    fileName.includes(searchTerm)
+                        ? "grid"
+                        : "none";
 
-                    row.style.display =
-                        fileName.includes(searchTerm)
-                            ? "grid"
-                            : "none";
+            });
 
-                });
-
-            }
-        );
-
-    }
+        }
+    );
 
 
     /* =====================================================
@@ -223,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       UPLOAD FILES
+       UPLOAD
        ===================================================== */
 
     async function uploadFiles(files) {
@@ -260,7 +261,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     await response.json();
 
 
-                if (!response.ok || !result.success) {
+                if (
+                    !response.ok ||
+                    !result.success
+                ) {
 
                     throw new Error(
                         result.error ||
@@ -298,10 +302,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       LOAD FILES FROM AWS S3
+       LOAD FILES
        ===================================================== */
 
     async function loadFiles() {
+
+        const fileList =
+            document.getElementById(
+                "fileList"
+            );
+
+
+        if (!fileList) {
+
+            return;
+
+        }
+
 
         try {
 
@@ -320,29 +337,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 !result.success
             ) {
 
-                console.error(
-                    "Unable to load files:",
-                    result.error
+                throw new Error(
+                    result.error ||
+                    "Unable to load files"
                 );
-
-                return;
 
             }
 
 
-            console.log(
-                "CloudVault files:",
-                result.files
+            const files =
+                result.files || [];
+
+
+            updateStatistics(
+                files
             );
 
 
-            /*
-             * The backend is now connected.
-             *
-             * Once we confirm the exact structure returned
-             * by your existing list_files.py, we'll render
-             * the real S3 files into the dashboard table.
-             */
+            renderFiles(
+                files
+            );
+
 
         } catch (error) {
 
@@ -351,13 +366,455 @@ document.addEventListener("DOMContentLoaded", () => {
                 error
             );
 
+
+            fileList.innerHTML = `
+
+                <div class="file-row">
+
+                    <span
+                        style="
+                            grid-column: 1 / -1;
+                        "
+                    >
+
+                        ❌ Unable to load files from S3.
+
+                    </span>
+
+                </div>
+
+            `;
+
         }
 
     }
 
 
     /* =====================================================
-       DOWNLOAD FILE
+       UPDATE DASHBOARD STATISTICS
+       ===================================================== */
+
+    function updateStatistics(files) {
+
+        const totalFiles =
+            files.length;
+
+
+        let totalBytes = 0;
+
+
+        let documentsBytes = 0;
+
+        let imagesBytes = 0;
+
+        let archivesBytes = 0;
+
+        let otherBytes = 0;
+
+
+        files.forEach(file => {
+
+            const size =
+                Number(file.size) || 0;
+
+
+            totalBytes += size;
+
+
+            const extension =
+                getExtension(
+                    file.name
+                );
+
+
+            if (
+                [
+                    "pdf",
+                    "doc",
+                    "docx",
+                    "txt",
+                    "xls",
+                    "xlsx",
+                    "ppt",
+                    "pptx",
+                    "csv"
+                ].includes(extension)
+            ) {
+
+                documentsBytes += size;
+
+            }
+
+            else if (
+                [
+                    "jpg",
+                    "jpeg",
+                    "png",
+                    "gif",
+                    "webp",
+                    "svg"
+                ].includes(extension)
+            ) {
+
+                imagesBytes += size;
+
+            }
+
+            else if (
+                [
+                    "zip",
+                    "rar",
+                    "7z",
+                    "tar",
+                    "gz"
+                ].includes(extension)
+            ) {
+
+                archivesBytes += size;
+
+            }
+
+            else {
+
+                otherBytes += size;
+
+            }
+
+        });
+
+
+        /* =================================================
+           TOTAL FILES
+           ================================================= */
+
+        setText(
+            "totalFiles",
+            totalFiles
+        );
+
+
+        /* =================================================
+           STORAGE USED
+           ================================================= */
+
+        setText(
+            "storageUsed",
+            formatFileSize(
+                totalBytes
+            )
+        );
+
+
+        /* =================================================
+           RECENT FILES
+           ================================================= */
+
+        const recentCount =
+            Math.min(
+                totalFiles,
+                5
+            );
+
+
+        setText(
+            "recentFiles",
+            recentCount
+        );
+
+
+        /* =================================================
+           STORAGE LIMIT
+           ================================================= */
+
+        const storageLimit =
+            10 * 1024 * 1024 * 1024;
+
+
+        const percentage =
+            Math.min(
+                100,
+                (
+                    totalBytes /
+                    storageLimit
+                ) * 100
+            );
+
+
+        setText(
+            "storagePercentage",
+            `${percentage.toFixed(1)}%`
+        );
+
+
+        /* =================================================
+           STORAGE BREAKDOWN
+           ================================================= */
+
+        setText(
+            "documentsSize",
+            formatFileSize(
+                documentsBytes
+            )
+        );
+
+
+        setText(
+            "imagesSize",
+            formatFileSize(
+                imagesBytes
+            )
+        );
+
+
+        setText(
+            "archivesSize",
+            formatFileSize(
+                archivesBytes
+            )
+        );
+
+
+        setText(
+            "otherSize",
+            formatFileSize(
+                otherBytes
+            )
+        );
+
+
+        /* =================================================
+           SIDEBAR STORAGE
+           ================================================= */
+
+        const sidebarPercent =
+            document.querySelector(
+                ".storage-percent"
+            );
+
+
+        const sidebarUsed =
+            document.querySelector(
+                ".storage-details span"
+            );
+
+
+        if (sidebarPercent) {
+
+            sidebarPercent.textContent =
+                `${percentage.toFixed(0)}%`;
+
+        }
+
+
+        if (sidebarUsed) {
+
+            sidebarUsed.textContent =
+                `${formatFileSize(totalBytes)} used`;
+
+        }
+
+
+        /* =================================================
+           PROGRESS BAR
+           ================================================= */
+
+        const progressBar =
+            document.querySelector(
+                ".storage-progress-bar"
+            );
+
+
+        if (progressBar) {
+
+            progressBar.style.width =
+                `${percentage}%`;
+
+        }
+
+    }
+
+
+    /* =====================================================
+       RENDER FILES
+       ===================================================== */
+
+    function renderFiles(files) {
+
+        const fileList =
+            document.getElementById(
+                "fileList"
+            );
+
+
+        if (!fileList) {
+
+            return;
+
+        }
+
+
+        fileList.innerHTML = "";
+
+
+        if (files.length === 0) {
+
+            fileList.innerHTML = `
+
+                <div class="file-row">
+
+                    <span
+                        style="
+                            grid-column: 1 / -1;
+                        "
+                    >
+
+                        ☁️ Your CloudVault bucket is empty.
+
+                    </span>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        /* =================================================
+           SORT BY LAST MODIFIED
+           ================================================= */
+
+        const sortedFiles =
+            [...files].sort(
+                (a, b) => {
+
+                    return (
+                        new Date(
+                            b.last_modified
+                        ) -
+                        new Date(
+                            a.last_modified
+                        )
+                    );
+
+                }
+            );
+
+
+        /* =================================================
+           SHOW RECENT FILES
+           ================================================= */
+
+        const recentFiles =
+            sortedFiles.slice(
+                0,
+                10
+            );
+
+
+        recentFiles.forEach(
+            file => {
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                row.className =
+                    "file-row";
+
+
+                const icon =
+                    getFileIcon(
+                        file.name
+                    );
+
+
+                row.innerHTML = `
+
+                    <div class="file-name">
+
+                        <div
+                            class="file-icon ${icon.className}"
+                        >
+                            ${icon.text}
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+                                ${escapeHtml(
+                                    file.name
+                                )}
+                            </strong>
+
+                            <small>
+                                S3 Object
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <span>
+                        ${formatFileSize(
+                            file.size
+                        )}
+                    </span>
+
+
+                    <span>
+                        ${formatDate(
+                            file.last_modified
+                        )}
+                    </span>
+
+
+                    <span
+                        class="status success"
+                    >
+                        ● Stored
+                    </span>
+
+
+                    <div class="file-actions">
+
+                        <button
+                            type="button"
+                            title="Download"
+                        >
+                            ↓
+                        </button>
+
+
+                        <button
+                            type="button"
+                            title="Delete"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+                `;
+
+
+                fileList.appendChild(
+                    row
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       DOWNLOAD
        ===================================================== */
 
     async function downloadFile(
@@ -383,12 +840,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         },
 
                         body: JSON.stringify({
+
                             file_name:
                                 fileName,
 
                             download_path:
-                                "/tmp"
+                                `/tmp/${fileName}`
+
                         })
+
                     }
                 );
 
@@ -433,7 +893,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       DELETE FILE
+       DELETE
        ===================================================== */
 
     async function deleteFile(
@@ -472,9 +932,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         },
 
                         body: JSON.stringify({
+
                             file_name:
                                 fileName
+
                         })
+
                     }
                 );
 
@@ -522,7 +985,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       FILE ACTION BUTTONS
+       ACTION BUTTONS
        ===================================================== */
 
     document.addEventListener(
@@ -563,20 +1026,25 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
-            const buttonText =
-                button.innerText.trim();
-
-
-            if (buttonText === "↓") {
+            if (
+                button.title ===
+                "Download"
+            ) {
 
                 downloadFile(
                     fileName
                 );
 
-            } else {
+            }
 
-                showNotification(
-                    `Options for ${fileName}`
+
+            else if (
+                button.title ===
+                "Delete"
+            ) {
+
+                deleteFile(
+                    fileName
                 );
 
             }
@@ -642,7 +1110,266 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       TOAST
+       UTILITY FUNCTIONS
+       ===================================================== */
+
+    function setText(
+        elementId,
+        value
+    ) {
+
+        const element =
+            document.getElementById(
+                elementId
+            );
+
+
+        if (element) {
+
+            element.textContent =
+                value;
+
+        }
+
+    }
+
+
+    function formatFileSize(
+        bytes
+    ) {
+
+        if (
+            !bytes ||
+            bytes <= 0
+        ) {
+
+            return "0 B";
+
+        }
+
+
+        const units = [
+            "B",
+            "KB",
+            "MB",
+            "GB",
+            "TB"
+        ];
+
+
+        const index =
+            Math.floor(
+                Math.log(bytes) /
+                Math.log(1024)
+            );
+
+
+        const safeIndex =
+            Math.min(
+                index,
+                units.length - 1
+            );
+
+
+        return (
+            parseFloat(
+                (
+                    bytes /
+                    Math.pow(
+                        1024,
+                        safeIndex
+                    )
+                ).toFixed(1)
+            ) +
+            " " +
+            units[safeIndex]
+        );
+
+    }
+
+
+    function formatDate(
+        dateString
+    ) {
+
+        if (!dateString) {
+
+            return "Unknown";
+
+        }
+
+
+        const date =
+            new Date(
+                dateString
+            );
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "Unknown";
+
+        }
+
+
+        return date.toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
+    }
+
+
+    function getExtension(
+        fileName
+    ) {
+
+        return (
+            fileName
+                .split(".")
+                .pop()
+                .toLowerCase()
+        );
+
+    }
+
+
+    function getFileIcon(
+        fileName
+    ) {
+
+        const extension =
+            getExtension(
+                fileName
+            );
+
+
+        if (
+            extension === "pdf"
+        ) {
+
+            return {
+                className: "pdf",
+                text: "PDF"
+            };
+
+        }
+
+
+        if (
+            [
+                "py",
+                "js",
+                "json",
+                "html",
+                "css",
+                "java",
+                "sh"
+            ].includes(extension)
+        ) {
+
+            return {
+                className: "python",
+                text: "CODE"
+            };
+
+        }
+
+
+        if (
+            [
+                "jpg",
+                "jpeg",
+                "png",
+                "gif",
+                "webp",
+                "svg"
+            ].includes(extension)
+        ) {
+
+            return {
+                className: "image",
+                text: "IMG"
+            };
+
+        }
+
+
+        if (
+            [
+                "zip",
+                "rar",
+                "7z",
+                "tar",
+                "gz"
+            ].includes(extension)
+        ) {
+
+            return {
+                className: "archive",
+                text: "ZIP"
+            };
+
+        }
+
+
+        if (
+            [
+                "doc",
+                "docx",
+                "txt",
+                "xls",
+                "xlsx",
+                "ppt",
+                "pptx"
+            ].includes(extension)
+        ) {
+
+            return {
+                className: "blue-icon",
+                text: "DOC"
+            };
+
+        }
+
+
+        return {
+            className: "blue-icon",
+            text: "FILE"
+        };
+
+    }
+
+
+    function escapeHtml(
+        value
+    ) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.textContent =
+            value;
+
+
+        return div.innerHTML;
+
+    }
+
+
+    /* =====================================================
+       TOAST NOTIFICATION
        ===================================================== */
 
     function showNotification(
@@ -669,8 +1396,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         toast.innerHTML = `
-            <span class="toast-icon">✓</span>
-            <span>${message}</span>
+
+            <span class="toast-icon">
+                ✓
+            </span>
+
+            <span>
+                ${escapeHtml(message)}
+            </span>
+
         `;
 
 
@@ -704,7 +1438,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       TOAST CSS
+       TOAST STYLES
        ===================================================== */
 
     const toastStyle =
