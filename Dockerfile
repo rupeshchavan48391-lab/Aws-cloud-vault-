@@ -1,17 +1,26 @@
-# Use Python official image
+
 FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first
+# Prevent Python from creating .pyc files
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Send Python output directly to the terminal
+ENV PYTHONUNBUFFERED=1
+
+# Copy dependency file
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY app/ .
+# Copy application
+COPY app ./app
 
-# Start CloudVault
-CMD ["python", "main.py"]
+# CloudVault web application port
+EXPOSE 5000
+
+# Start Flask application using Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app.web_app:app"]
