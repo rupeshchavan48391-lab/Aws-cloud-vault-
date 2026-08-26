@@ -1,6 +1,5 @@
-
-
 from botocore.exceptions import ClientError
+
 from s3_service import s3
 from config import BUCKET_NAME
 from logger import logger
@@ -8,7 +7,7 @@ from logger import logger
 
 def list_files():
     """
-    Display all files stored in the configured S3 bucket.
+    Return all files stored in the configured S3 bucket.
     """
 
     try:
@@ -23,27 +22,40 @@ def list_files():
                 f"Bucket '{BUCKET_NAME}' is empty."
             )
 
-            return
+            return []
 
-        logger.info(
-            f"Files found in bucket '{BUCKET_NAME}':"
-        )
+        files = []
 
         for file in response["Contents"]:
 
-            file_name = file["Key"]
-            file_size = file["Size"]
-            last_modified = file["LastModified"]
+            files.append({
+                "name": file["Key"],
+                "size": file["Size"],
+                "last_modified": (
+                    file["LastModified"].isoformat()
+                )
+            })
 
-            print(f"📄 File      : {file_name}")
-            print(f"📦 Size      : {file_size} bytes")
-            print(f"🕒 Modified  : {last_modified}")
-            print("-----------------------------------")
+        logger.info(
+            f"Found {len(files)} file(s) "
+            f"in bucket '{BUCKET_NAME}'."
+        )
+
+        return files
 
     except ClientError as error:
 
-        logger.error(f"Failed to list files: {error}")
+        logger.error(
+            f"Failed to list files: {error}"
+        )
+
+        return []
 
     except Exception as error:
 
-        logger.error(f"Unexpected error: {error}")
+        logger.error(
+            f"Unexpected error: {error}"
+        )
+
+        return []
+
