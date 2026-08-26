@@ -14,147 +14,399 @@ from download import download_file
 from delete import delete_file
 from list_files import list_files
 
+from s3_service import s3
+from config import BUCKET_NAME
 from logger import logger
 
 
-def display_menu():
-    """
-    Display the CloudVault main menu.
-    """
-
-    print("\n===================================")
-    print("          ☁️ CloudVault")
-    print("===================================")
-    print("1. Create Bucket")
-    print("2. List Buckets")
-    print("3. Upload File")
-    print("4. List Files")
-    print("5. Download File")
-    print("6. Delete File")
-    print("7. Delete Bucket")
-    print("8. Exit")
-    print("===================================")
+app = Flask(__name__)
 
 
-def main():
-    """
-    Run the CloudVault application.
-    """
+# =========================================================
+# DASHBOARD
+# =========================================================
 
-    while True:
+@app.route("/")
+def dashboard():
 
-        display_menu()
+    return render_template(
+        "dashboard.html"
+    )
 
-        choice = input("Enter your choice: ").strip()
 
-        # -------------------------------
-        # Create Bucket
-        # -------------------------------
+# =========================================================
+# LIST FILES
+# =========================================================
 
-        if choice == "1":
+@app.route(
+    "/api/files",
+    methods=["GET"]
+)
+def api_files():
 
-            create_bucket()
+    try:
 
-        # -------------------------------
-        # List Buckets
-        # -------------------------------
+        response = s3.list_objects_v2(
+            Bucket=BUCKET_NAME
+        )
 
-        elif choice == "2":
+        files = []
 
-            list_buckets()
+        for item in response.get(
+            "Contents",
+            []
+        ):
 
-        # -------------------------------
-        # Upload File
-        # -------------------------------
+            files.append({
 
-        elif choice == "3":
+                "name":
+                    item["Key"],
 
-            file_path = input(
-                "Enter the full path of the file to upload: "
-            ).strip()
+                "size":
+                    item["Size"],
 
-            upload_file(file_path)
+                "last_modified":
+                    item["LastModified"].isoformat()
 
-        # -------------------------------
-        # List Files
-        # -------------------------------
+            })
 
-        elif choice == "4":
 
-            list_files()
+        return jsonify({
 
-        # -------------------------------
-        # Download File
-        # -------------------------------
+            "success": True,
 
-        elif choice == "5":
+            "files": files,
 
-           
+            "count": len(files)
 
-            file_name = input(
-                 "Enter the S3 file name: "
-            ).strip()
+        })
 
-           if not validate_file_name(file_name):
 
-              print("❌ File name cannot be empty.")
-              continue
+    except Exception as error:
 
-           download_path = input(
-               "Enter the local path where you want to save the file: "
-          ).strip()
+        logger.error(
+            f"Failed to load files: {error}"
+        )
 
-          if not validate_download_path(download_path):
 
-              print("❌ Download path cannot be empty.")
-              continue
+        return jsonify({
 
-         download_file(
-             file_name,
-             download_path
-         )
-        # -------------------------------
-        # Delete File
-        # -------------------------------
+            "success": False,
 
-       elif choice == "6":
-            file_name = input(
-                "Enter the S3 file name to delete: "
-            ).strip()
-    
-           if not validate_file_name(file_name):
+            "error": str(error)
 
-                print("❌ File name cannot be empty.")
-                continue
+        }), 500
 
-           delete_file(file_name)
-        # Delete Bucket
-        # -------------------------------
 
-        elif choice == "7":
+# =========================================================
+# UPLOAD FILE
+# =========================================================
 
-            print("\n⚠️ Warning: The bucket must be empty before")
-            print("it can be deleted.\n")
+@app.route(
+    "/api/upload",
+    methods=["POST"]
+)
+def api_upload():
 
-            delete_bucket()
+    try:
 
-        # -------------------------------
-        # Exit
-        # -------------------------------
+        if "file" not in request.files:
 
-        elif choice == "8":
+            return jsonify({
 
-            print("\n☁️ Thank you for using CloudVault!")
-            break
+                "success": False,
 
-        # -------------------------------
-        # Invalid Choice
-        # -------------------------------
+                "error":
+                    "No file provided"
 
-        else:
+            }), 400
 
-            print("\n❌ Invalid choice. Please select 1-8.")
 
+        file = request.files["file"]
+
+
+        if not file.filename:
+
+            return jsonify({
+
+                "success": False,
+
+                "error":
+                    "No file selected"
+
+            }), 400
+
+
+        filename = os.path.basename(
+            file.filename
+        )
+
+
+        upload_path = os.path.join(
+            "/tmp",
+            filename
+        )
+
+
+        file.save(
+            upload_path
+        )
+
+
+        success = upload_file(
+            upload_path
+        )
+
+
+        # Remove temporary file
+        if os.path.exists(
+            upload_path
+        ):
+
+            os.remove(
+                upload_path
+            )
+
+
+        if not success:
+
+            return jsonify({
+
+                "success": False,
+
+                "error":
+                    "Upload to S3 failed"
+
+            }), 500
+
+
+        logger.info(
+            f"API upload successful: {filename}"
+        )
+
+
+        return jsonify({
+
+            "success": True,
+
+            "message":
+                "File uploaded successfully",
+
+            "file_name":
+                filename
+
+        })
+
+
+    except Exception as error:
+
+        logger.error(
+            f"Upload API error: {error}"
+        )
+
+
+        return jsonify({
+
+            "success": False,
+
+            "error": str(error)
+
+        }), 500
+
+
+# =========================================================
+# DOWNLOAD FILE
+# =========================================================
+
+@app.route(
+    "/api/download",
+    methods=["POST"]
+)
+def api_download():
+
+    try:
+
+        data = request.get_json(
+            silent=True
+        ) or {}
+
+
+        file_name = data.get(
+            "file_name"
+        )
+
+
+        if not file_name:
+
+            return jsonify({
+
+                "success": False,
+
+                "error":
+                    "File name is required"
+
+            }), 400
+
+
+        file_name = os.path.basename(
+            file_name
+        )
+
+
+        download_path = os.path.join(
+            "/tmp",
+            file_name
+        )
+
+
+        success = download_file(
+            file_name,
+            download_path
+        )
+
+
+        if not success:
+
+            return jsonify({
+
+                "success": False,
+
+                "error":
+                    "Download failed"
+
+            }), 500
+
+
+        logger.info(
+            f"API download successful: {file_name}"
+        )
+
+
+        return send_file(
+
+            download_path,
+
+            as_attachment=True,
+
+            download_name=file_name
+
+        )
+
+
+    except Exception as error:
+
+        logger.error(
+            f"Download API error: {error}"
+        )
+
+
+        return jsonify({
+
+            "success": False,
+
+            "error": str(error)
+
+        }), 500
+
+
+# =========================================================
+# DELETE FILE
+# =========================================================
+
+@app.route(
+    "/api/delete",
+    methods=["DELETE"]
+)
+def api_delete():
+
+    try:
+
+        data = request.get_json(
+            silent=True
+        ) or {}
+
+
+        file_name = data.get(
+            "file_name"
+        )
+
+
+        if not file_name:
+
+            return jsonify({
+
+                "success": False,
+
+                "error":
+                    "File name is required"
+
+            }), 400
+
+
+        file_name = os.path.basename(
+            file_name
+        )
+
+
+        success = delete_file(
+            file_name
+        )
+
+
+        if success is False:
+
+            return jsonify({
+
+                "success": False,
+
+                "error":
+                    "Delete failed"
+
+            }), 500
+
+
+        logger.info(
+            f"API delete successful: {file_name}"
+        )
+
+
+        return jsonify({
+
+            "success": True,
+
+            "message":
+                "File deleted successfully",
+
+            "file_name":
+                file_name
+
+        })
+
+
+    except Exception as error:
+
+        logger.error(
+            f"Delete API error: {error}"
+        )
+
+
+        return jsonify({
+
+            "success": False,
+
+            "error": str(error)
+
+        }), 500
+
+
+# =========================================================
+# APPLICATION START
+# =========================================================
 
 if __name__ == "__main__":
-    main()
+
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
